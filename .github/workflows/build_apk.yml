@@ -43,6 +43,17 @@ jobs:
       - name: Supprimer le fichier de test par défaut
         run: rm -f test/widget_test.dart
 
+        - name: Vérifier taille du JSON
+        run: |
+          wc -c assets/data/game_structure.json
+          python3 -c "
+          import json
+          with open('assets/data/game_structure.json') as f:
+              d = json.load(f)
+          print('Paragraphes:', len(d['paragraphs']))
+          print('JSON valide: OK')
+          "
+
       - name: flutter pub get
         run: flutter pub get
 
