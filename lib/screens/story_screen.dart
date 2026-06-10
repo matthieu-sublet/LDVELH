@@ -12,6 +12,7 @@ import '../providers/game_providers.dart';
 import '../providers/persistence_service.dart';
 import '../widgets/character_drawer.dart';
 import '../widgets/combat_overlay.dart';
+import '../engine/multi_combat_engine.dart';
 import '../widgets/multi_combat_overlay.dart';
 import '../widgets/hp_setup_screen.dart';
 import '../widgets/choice_button.dart';
