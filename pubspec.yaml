@@ -52,19 +52,19 @@ flutter:
   fonts:
     - family: Cinzel
       fonts:
-        - asset: assets/fonts/Cinzel-Regular.ttf
+        - asset: assets/font/Cinzel-Regular.ttf
           weight: 400
-        - asset: assets/fonts/Cinzel-SemiBold.ttf
+        - asset: assets/font/Cinzel-SemiBold.ttf
           weight: 600
-        - asset: assets/fonts/Cinzel-Bold.ttf
+        - asset: assets/font/Cinzel-Bold.ttf
           weight: 700
     - family: Crimson Text
       fonts:
-        - asset: assets/fonts/CrimsonText-Regular.ttf
+        - asset: assets/font/CrimsonText-Regular.ttf
           weight: 400
-        - asset: assets/fonts/CrimsonText-SemiBold.ttf
+        - asset: assets/font/CrimsonText-SemiBold.ttf
           weight: 600
-        - asset: assets/fonts/CrimsonText-Italic.ttf
+        - asset: assets/font/CrimsonText-Italic.ttf
           style: italic
 
   # ── Assets ───────────────────────────────────────────────
