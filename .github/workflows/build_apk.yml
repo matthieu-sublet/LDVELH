@@ -23,6 +23,17 @@ jobs:
           channel: stable
           cache: true
 
+      - name: Supprimer le dossier android existant
+        run: rm -rf android
+
+      - name: Recréer le projet Android avec Flutter
+        run: flutter create --platforms android .
+
+      - name: Restaurer l'applicationId correct
+        run: |
+          sed -i 's/com.example.graal_chateau_tenebres/com.graal.chateau_tenebres/g' \
+            android/app/build.gradle
+
       - name: flutter pub get
         run: flutter pub get
 
