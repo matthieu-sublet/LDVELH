@@ -19,7 +19,7 @@ jobs:
 
       - uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.22.0'
+          flutter-version: '3.27.0'
           channel: stable
           cache: true
 
@@ -32,6 +32,15 @@ jobs:
       - name: Restaurer l'applicationId correct
         run: |
           sed -i 's/com.example.ldvelh/com.graal.chateau_tenebres/g' \
+            android/app/build.gradle
+
+      - name: Mettre à jour minSdkVersion
+        run: |
+          sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 21/g' \
+            android/app/build.gradle
+          sed -i 's/targetSdk = flutter.targetSdkVersion/targetSdk = 35/g' \
+            android/app/build.gradle
+          sed -i 's/compileSdk = flutter.compileSdkVersion/compileSdk = 35/g' \
             android/app/build.gradle
 
       - name: flutter pub get
