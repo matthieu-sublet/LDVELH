@@ -23,9 +23,6 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Générer le JSON
-        run: python3 parse_graal.py source.md assets/data/game_structure.json
-
       - name: flutter pub get
         run: flutter pub get
 
