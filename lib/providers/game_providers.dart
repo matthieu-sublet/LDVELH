@@ -274,7 +274,7 @@ class CombatNotifier extends StateNotifier<CombatState> {
   void startCombat(CombatData data, Enemy enemyTemplate) {
     final enemy = enemyTemplate.clone();
     state = CombatState(
-      phase: data.playerStrikesFirst
+      phase: (data.playerStrikesFirst ?? true)
           ? CombatPhase.playerTurn
           : CombatPhase.enemyTurn,
       enemy: enemy,
