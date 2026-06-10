@@ -284,7 +284,7 @@ class CombatNotifier extends StateNotifier<CombatState> {
     );
 
     // Si l'ennemi frappe en premier, résoudre son attaque immédiatement
-    if (!data.playerStrikesFirst) {
+    if (!(data.playerStrikesFirst ?? true)) {
       _resolveEnemyAttack();
     }
   }
