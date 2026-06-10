@@ -1,0 +1,76 @@
+name: graal_chateau_tenebres
+description: La Quête du Graal — Le Château des Ténèbres. Application mobile interactive.
+version: 1.0.0+1
+publish_to: none
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # ── State management ──────────────────────────────────────
+  flutter_riverpod: ^2.4.9
+  riverpod_annotation: ^2.3.3
+
+  # ── Rendu Markdown (texte des paragraphes) ────────────────
+  flutter_markdown: ^0.6.18
+
+  # ── Persistence locale (sauvegarde automatique) ───────────
+  shared_preferences: ^2.2.2
+
+  # ── Icône d'application ───────────────────────────────────
+  flutter_launcher_icons: ^0.13.1
+
+  # ── Animations ────────────────────────────────────────────
+  # (Flutter natif suffit pour ce projet)
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  build_runner: ^2.4.7
+  riverpod_generator: ^2.3.9
+
+# ── Icône d'application (512×512 PNG dans assets/icon/) ─────
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/icon/app_icon.png"
+  min_sdk_android: 21
+  adaptive_icon_background: "#0E0E14"
+  adaptive_icon_foreground: "assets/icon/app_icon_foreground.png"
+
+flutter:
+  uses-material-design: true
+
+  # ── Polices ─────────────────────────────────────────────
+  # Télécharger depuis Google Fonts :
+  # - Cinzel (titres médiévaux)        → fonts/Cinzel/
+  # - Crimson Text (corps de texte)    → fonts/CrimsonText/
+  fonts:
+    - family: Cinzel
+      fonts:
+        - asset: assets/fonts/Cinzel-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Cinzel-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Cinzel-Bold.ttf
+          weight: 700
+    - family: Crimson Text
+      fonts:
+        - asset: assets/fonts/CrimsonText-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/CrimsonText-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/CrimsonText-Italic.ttf
+          style: italic
+
+  # ── Assets ───────────────────────────────────────────────
+  assets:
+    - assets/data/game_structure.json
+    - assets/images/
+    - assets/images/paragraphs/
+    - assets/images/enemies/
+    - assets/icon/

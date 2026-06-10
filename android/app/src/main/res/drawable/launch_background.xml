@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- android/app/src/main/res/drawable/launch_background.xml -->
+<!-- Fond de démarrage : noir encre #0E0E14 avec logo centré -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Fond sombre -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#0E0E14"/>
+        </shape>
+    </item>
+    <!-- Logo centré (assets/icon/app_icon.png copié ici automatiquement par flutter_launcher_icons) -->
+    <!-- Décommenter après avoir généré les icônes :
+    <item
+        android:width="192dp"
+        android:height="192dp"
+        android:gravity="center">
+        <bitmap
+            android:gravity="fill"
+            android:src="@mipmap/ic_launcher"/>
+    </item>
+    -->
+</layer-list>
