@@ -27,11 +27,11 @@ jobs:
         run: rm -rf android
 
       - name: Recréer le projet Android avec Flutter
-        run: flutter create --platforms android .
+        run: flutter create --platforms android --project-name ldvelh .
 
       - name: Restaurer l'applicationId correct
         run: |
-          sed -i 's/com.example.graal_chateau_tenebres/com.graal.chateau_tenebres/g' \
+          sed -i 's/com.example.ldvelh/com.graal.chateau_tenebres/g' \
             android/app/build.gradle
 
       - name: flutter pub get
