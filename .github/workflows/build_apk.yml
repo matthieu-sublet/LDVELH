@@ -23,45 +23,16 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Télécharger les polices Google Fonts
+      - name: Supprimer le dossier android existant
+        run: rm -rf android
+
+      - name: Recréer le projet Android avec Flutter
+        run: flutter create --platforms android --project-name ldvelh .
+
+      - name: Restaurer l'applicationId correct
         run: |
-          mkdir -p assets/fonts
-          pip install requests --quiet
-          python3 - << 'EOF'
-          import urllib.request, zipfile, os, shutil
-
-          fonts = {
-            "Cinzel": "https://fonts.google.com/download?family=Cinzel",
-            "Crimson_Text": "https://fonts.google.com/download?family=Crimson+Text"
-          }
-
-          needed = {
-            "Cinzel-Regular.ttf": "Cinzel-Regular.ttf",
-            "Cinzel-SemiBold.ttf": "Cinzel-SemiBold.ttf",
-            "Cinzel-Bold.ttf": "Cinzel-Bold.ttf",
-            "CrimsonText-Regular.ttf": "CrimsonText-Regular.ttf",
-            "CrimsonText-SemiBold.ttf": "CrimsonText-SemiBold.ttf",
-            "CrimsonText-Italic.ttf": "CrimsonText-Italic.ttf",
-          }
-
-          for family, url in fonts.items():
-            zip_path = f"/tmp/{family}.zip"
-            print(f"Downloading {family}...")
-            urllib.request.urlretrieve(url, zip_path)
-            with zipfile.ZipFile(zip_path, 'r') as z:
-              for name in z.namelist():
-                base = os.path.basename(name)
-                if base in needed:
-                  with z.open(name) as src, open(f"assets/fonts/{base}", 'wb') as dst:
-                    dst.write(src.read())
-                  print(f"  extracted: {base}")
-
-          missing = [f for f in needed if not os.path.exists(f"assets/fonts/{f}")]
-          if missing:
-            print(f"Still missing: {missing}")
-          else:
-            print("All fonts ready.")
-          EOF
+          sed -i 's/com.example.ldvelh/com.graal.chateau_tenebres/g' \
+            android/app/build.gradle
 
       - name: flutter pub get
         run: flutter pub get
