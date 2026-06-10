@@ -16,7 +16,10 @@ import 'providers/persistence_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Forcer portrait
+  FlutterError.onError = (details) {
+    FlutterError.presentError(details);
+  };
+
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
@@ -27,13 +30,11 @@ void main() async {
     statusBarIconBrightness: Brightness.light,
   ));
 
-  // Pré-charger SharedPreferences pour la sauvegarde
   final prefs = await SharedPreferences.getInstance();
 
   runApp(
     ProviderScope(
       overrides: [
-        // Injecter l'instance SharedPreferences synchrone
         sharedPreferencesProvider.overrideWith((_) async => prefs),
       ],
       child: const GraalApp(),
@@ -63,6 +64,31 @@ class GraalApp extends StatelessWidget {
           );
         }
         return null;
+      },
+      builder: (context, widget) {
+        ErrorWidget.builder = (details) => Scaffold(
+          backgroundColor: const Color(0xFF0E0E14),
+          body: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('⚠️ Erreur au démarrage',
+                    style: TextStyle(color: Color(0xFFFF6B6B),
+                      fontSize: 20, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 16),
+                  Text(details.exception.toString(),
+                    style: const TextStyle(color: Color(0xFFE8DCC8), fontSize: 14)),
+                  const SizedBox(height: 12),
+                  Text(details.stack.toString(),
+                    style: const TextStyle(color: Color(0xFF9A8E78), fontSize: 11)),
+                ],
+              ),
+            ),
+          ),
+        );
+        return widget ?? const SizedBox();
       },
     );
   }
