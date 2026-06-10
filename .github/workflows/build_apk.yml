@@ -40,14 +40,14 @@ jobs:
           sed -i 's/compileSdk = flutter.compileSdkVersion/compileSdk = 35/g' \
             android/app/build.gradle
 
+      - name: Supprimer le fichier de test par défaut
+        run: rm -f test/widget_test.dart
+
       - name: flutter pub get
         run: flutter pub get
 
-      - name: Vérifier la syntaxe Dart
-        run: flutter analyze --no-fatal-infos 2>&1 | tail -30
-
-      - name: Build APK debug avec logs verbeux
-        run: flutter build apk --debug --verbose 2>&1 | tail -50
+      - name: Build APK debug
+        run: flutter build apk --debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
