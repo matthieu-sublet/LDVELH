@@ -43,7 +43,7 @@ jobs:
       - name: Supprimer le fichier de test par défaut
         run: rm -f test/widget_test.dart
 
-        - name: Vérifier taille du JSON
+      - name: Vérifier taille du JSON
         run: |
           wc -c assets/data/game_structure.json
           python3 -c "
