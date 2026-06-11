@@ -1,4 +1,4 @@
-name: Build APK
+name: Build & Deploy Web
 
 on:
   push:
@@ -6,16 +6,11 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-apk:
+  build-web:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
 
       - uses: subosito/flutter-action@v2
         with:
@@ -23,46 +18,17 @@ jobs:
           channel: stable
           cache: true
 
-      - name: Supprimer le dossier android existant
-        run: rm -rf android
-
-      - name: Recréer le projet Android avec Flutter
-        run: flutter create --platforms android --project-name ldvelh .
-
-      - name: Restaurer l'applicationId correct
-        run: |
-          sed -i 's/com.example.ldvelh/com.graal.chateau_tenebres/g' \
-            android/app/build.gradle
-          sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 21/g' \
-            android/app/build.gradle
-          sed -i 's/targetSdk = flutter.targetSdkVersion/targetSdk = 35/g' \
-            android/app/build.gradle
-          sed -i 's/compileSdk = flutter.compileSdkVersion/compileSdk = 35/g' \
-            android/app/build.gradle
-
-      - name: Supprimer le fichier de test par défaut
+      - name: Supprimer le fichier de test
         run: rm -f test/widget_test.dart
-
-      - name: Vérifier taille du JSON
-        run: |
-          wc -c assets/data/game_structure.json
-          python3 -c "
-          import json
-          with open('assets/data/game_structure.json') as f:
-              d = json.load(f)
-          print('Paragraphes:', len(d['paragraphs']))
-          print('JSON valide: OK')
-          "
 
       - name: flutter pub get
         run: flutter pub get
 
-      - name: Build APK debug
-        run: flutter build apk --debug
+      - name: Build Web
+        run: flutter build web --release --base-href "/LDVELH/"
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
+      - name: Deploy sur GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
         with:
-          name: app-debug
-          path: build/app/outputs/flutter-apk/app-debug.apk
-          retention-days: 30
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build/web
