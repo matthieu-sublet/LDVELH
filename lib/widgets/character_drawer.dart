@@ -67,7 +67,7 @@ class CharacterDrawer extends ConsumerWidget {
                   children: [
                     _StatRow('Points XP', '${player.experiencePoints}', GraalTheme.amberLight),
                     _StatRow('Prochain PV permanent',
-                        'dans ${player.xpToNextPermanentHp} XP', GraalTheme.textSecondary),
+                        'dans ${20 - (player.experiencePoints % 20)} XP', GraalTheme.textSecondary),
                   ],
                 ),
               ),
@@ -90,7 +90,8 @@ class CharacterDrawer extends ConsumerWidget {
                 child: Column(
                   children: [
                     _StatRow('Arme',
-                        player.equippedWeapon?.name ?? 'Aucune', GraalTheme.amberLight),
+                      player.inventory.where((i) => i.type == ItemType.weapon).map((i) => i.name).firstOrNull ?? 'Aucune',
+                      GraalTheme.amberLight),
                     if (player.attackThreshold < 6)
                       _StatRow('Seuil d\'attaque',
                           '${player.attackThreshold} (au lieu de 6)', GraalTheme.success),
@@ -98,7 +99,8 @@ class CharacterDrawer extends ConsumerWidget {
                       _StatRow('Bonus dégâts arme',
                           '+${player.weaponBonusDamage}', GraalTheme.success),
                     _StatRow('Armure',
-                        player.equippedArmor?.name ?? 'Aucune', GraalTheme.textSecondary),
+                      player.inventory.where((i) => i.type == ItemType.armor).map((i) => i.name).firstOrNull ?? 'Aucune',
+                      GraalTheme.textSecondary),
                     if (player.armorReduction > 0)
                       _StatRow('Réduction dégâts',
                           '-${player.armorReduction}', GraalTheme.success),
