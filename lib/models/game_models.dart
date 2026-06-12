@@ -1,249 +1,275 @@
-// ============================================================
-//  models/game_models.dart  —  Modèles de données typés
-// ============================================================
-
 import 'dart:convert';
 
-// ─── Objet d'inventaire ────────────────────────────────────
+// ── Types ──────────────────────────────────────────────────
 
+enum ChapterType { narration, jeu }
 enum ItemType { weapon, armor, consumable, magic, quest, gold }
+
+// ── Chapitre narratif ou de jeu ───────────────────────────
+
+class GameChapter {
+  final int order;
+  final String id;
+  final String title;
+  final ChapterType type;
+  // Narration
+  final String? contenu;
+  final String? suivant;
+  // Jeu
+  final String? paragrapheDepart;
+  final List<GameParagraph> paragraphes;
+
+  const GameChapter({
+    required this.order,
+    required this.id,
+    required this.title,
+    required this.type,
+    this.contenu,
+    this.suivant,
+    this.paragrapheDepart,
+    this.paragraphes = const [],
+  });
+
+  factory GameChapter.fromJson(Map<String, dynamic> json) {
+    final typeStr = json['type'] as String? ?? 'narration';
+    return GameChapter(
+      order: json['order'] as int? ?? 0,
+      id: json['id'] as String,
+      title: json['title'] as String? ?? '',
+      type: typeStr == 'jeu' ? ChapterType.jeu : ChapterType.narration,
+      contenu: json['contenu'] as String?,
+      suivant: json['suivant'] as String?,
+      paragrapheDepart: json['paragrapheDepart'] as String?,
+      paragraphes: (json['paragraphes'] as List<dynamic>? ?? [])
+          .map((p) => GameParagraph.fromJson(p as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+}
+
+// ── Paragraphe de jeu ─────────────────────────────────────
+
+class GameParagraph {
+  final String id;
+  final String title;
+  final String text;
+  final int? corruptionTier;
+  final EnemyData? enemy;
+  final List<ParagraphChoice> choices;
+  final bool canDie;
+
+  const GameParagraph({
+    required this.id,
+    required this.title,
+    required this.text,
+    this.corruptionTier,
+    this.enemy,
+    this.choices = const [],
+    this.canDie = false,
+  });
+
+  factory GameParagraph.fromJson(Map<String, dynamic> json) {
+    return GameParagraph(
+      id: json['id'] as String,
+      title: json['title'] as String? ?? '',
+      text: json['text'] as String? ?? '',
+      corruptionTier: json['corruptionTier'] as int?,
+      enemy: json['enemy'] != null
+          ? EnemyData.fromJson(json['enemy'] as Map<String, dynamic>)
+          : null,
+      choices: (json['choices'] as List<dynamic>? ?? [])
+          .map((c) => ParagraphChoice.fromJson(c as Map<String, dynamic>))
+          .toList(),
+      canDie: json['canDie'] as bool? ?? false,
+    );
+  }
+}
+
+// ── Ennemi ────────────────────────────────────────────────
+
+class EnemyData {
+  final String name;
+  final int lifePoints;
+  final int extraDamage;
+  int currentHp;
+
+  EnemyData({
+    required this.name,
+    required this.lifePoints,
+    this.extraDamage = 0,
+  }) : currentHp = lifePoints;
+
+  factory EnemyData.fromJson(Map<String, dynamic> json) {
+    return EnemyData(
+      name: json['name'] as String? ?? 'Ennemi',
+      lifePoints: json['lifePoints'] as int? ?? 10,
+      extraDamage: json['extraDamage'] as int? ?? 0,
+    );
+  }
+
+  EnemyData clone() => EnemyData(
+    name: name, lifePoints: lifePoints, extraDamage: extraDamage,
+  )..currentHp = currentHp;
+
+  bool get isDead => currentHp <= 0;
+  bool get isKnockedOut => currentHp <= 5 && currentHp > 0;
+}
+
+// ── Choix de navigation ───────────────────────────────────
+
+class ParagraphChoice {
+  final String text;
+  final String nextId;
+  final String? requiresItem;
+  final int? requiresGold;
+  final bool hiddenIfMissing;
+  final bool resetsGame;
+
+  const ParagraphChoice({
+    required this.text,
+    required this.nextId,
+    this.requiresItem,
+    this.requiresGold,
+    this.hiddenIfMissing = false,
+    this.resetsGame = false,
+  });
+
+  factory ParagraphChoice.fromJson(Map<String, dynamic> json) {
+    return ParagraphChoice(
+      text: json['text'] as String? ?? '',
+      nextId: json['nextId'] as String? ?? json['target_paragraph'] as String? ?? '',
+      requiresItem: json['requiresItem'] as String?,
+      requiresGold: json['requiresGold'] as int?,
+      hiddenIfMissing: json['hiddenIfMissing'] as bool? ?? false,
+      resetsGame: json['resetsGame'] as bool? ?? false,
+    );
+  }
+}
+
+// ── Données du livre complet ──────────────────────────────
+
+class GameBook {
+  final List<GameChapter> histoire;
+  final Map<String, String> annexes;
+  final DreamTime tempsDuReve;
+
+  const GameBook({
+    required this.histoire,
+    required this.annexes,
+    required this.tempsDuReve,
+  });
+
+  factory GameBook.fromJson(Map<String, dynamic> json) {
+    return GameBook(
+      histoire: (json['histoire'] as List<dynamic>? ?? [])
+          .map((c) => GameChapter.fromJson(c as Map<String, dynamic>))
+          .toList(),
+      annexes: Map<String, String>.from(
+        (json['annexes'] as Map<String, dynamic>? ?? {}).map(
+          (k, v) => MapEntry(k, v.toString()),
+        ),
+      ),
+      tempsDuReve: DreamTime.fromJson(
+        json['tempsDuReve'] as Map<String, dynamic>? ?? {},
+      ),
+    );
+  }
+
+  GameChapter? chapterById(String id) {
+    try {
+      return histoire.firstWhere((c) => c.id == id);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  GameParagraph? paragraphById(String paraId) {
+    for (final ch in histoire) {
+      for (final p in ch.paragraphes) {
+        if (p.id == paraId) return p;
+      }
+    }
+    return null;
+  }
+}
+
+// ── Temps du Rêve ─────────────────────────────────────────
+
+class DreamSection {
+  final String id;
+  final String text;
+  final List<ParagraphChoice> choices;
+
+  const DreamSection({
+    required this.id,
+    required this.text,
+    this.choices = const [],
+  });
+
+  factory DreamSection.fromJson(Map<String, dynamic> json) {
+    return DreamSection(
+      id: json['id'] as String? ?? '',
+      text: json['text'] as String? ?? '',
+      choices: (json['choices'] as List<dynamic>? ?? [])
+          .map((c) => ParagraphChoice.fromJson(c as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+}
+
+class DreamTime {
+  final String description;
+  final List<DreamSection> sections;
+
+  const DreamTime({required this.description, required this.sections});
+
+  factory DreamTime.fromJson(Map<String, dynamic> json) {
+    return DreamTime(
+      description: json['description'] as String? ?? '',
+      sections: (json['sections'] as List<dynamic>? ?? [])
+          .map((s) => DreamSection.fromJson(s as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+}
+
+// ── Objets d'inventaire ───────────────────────────────────
 
 class InventoryItem {
   final String id;
   final String name;
   final ItemType type;
   final String description;
-  final String? imageAsset;
-
-  // Weapon
-  final int? attackThresholdOverride; // null = 6 (standard), 4 pour E.J.
+  final int? attackThresholdOverride;
   final int bonusDamage;
-
-  // Armor
-  final int damageReduction; // ex: 5 pour pourpoint en peau de dragon
-
-  // Consumable / Magic
+  final int damageReduction;
   int usesRemaining;
   final int usesTotal;
-  final String? effect; // "heal_2d6", "damage_10_no_roll", etc.
-
-  // Dragon coat special rule
-  final bool bypassedByWolf; // Le loup contourne le pourpoint
+  final String? effect;
 
   InventoryItem({
     required this.id,
     required this.name,
     required this.type,
     required this.description,
-    this.imageAsset,
     this.attackThresholdOverride,
     this.bonusDamage = 0,
     this.damageReduction = 0,
     this.usesRemaining = 0,
     this.usesTotal = 0,
     this.effect,
-    this.bypassedByWolf = false,
   });
 
-  factory InventoryItem.fromJson(Map<String, dynamic> json) {
-    return InventoryItem(
-      id: json['id'],
-      name: json['name'],
-      type: ItemType.values.firstWhere(
-        (e) => e.name == json['type'],
-        orElse: () => ItemType.quest,
-      ),
-      description: json['description'] ?? '',
-      attackThresholdOverride: json['attack_threshold_override'],
-      bonusDamage: json['bonus_damage'] ?? 0,
-      damageReduction: json['damage_reduction'] ?? 0,
-      usesRemaining: json['uses_remaining'] ?? 0,
-      usesTotal: json['uses_total'] ?? 0,
-      effect: json['effect'],
-    );
-  }
-
-  InventoryItem copyWith({int? usesRemaining}) {
-    return InventoryItem(
-      id: id, name: name, type: type, description: description,
-      attackThresholdOverride: attackThresholdOverride,
-      bonusDamage: bonusDamage, damageReduction: damageReduction,
-      usesRemaining: usesRemaining ?? this.usesRemaining,
-      usesTotal: usesTotal, effect: effect,
-    );
-  }
+  InventoryItem copyWith({int? usesRemaining}) => InventoryItem(
+    id: id, name: name, type: type, description: description,
+    attackThresholdOverride: attackThresholdOverride,
+    bonusDamage: bonusDamage, damageReduction: damageReduction,
+    usesRemaining: usesRemaining ?? this.usesRemaining,
+    usesTotal: usesTotal, effect: effect,
+  );
 }
 
-// ─── Ennemi ────────────────────────────────────────────────
-
-class Enemy {
-  final String id;
-  final String name;
-  final int maxHp;
-  final int attackThreshold;  // Score minimal pour toucher le joueur (défaut 6)
-  final int bonusDamage;
-  final int armorPoints;
-  final bool playerCoatBypassed; // Contourne le pourpoint en peau de dragon
-  final bool strikesFirst;
-  final String? imageAsset;
-  final String? specialNotes;
-
-  // État de combat (mutable)
-  int currentHp;
-  int currentArmor;
-
-  Enemy({
-    required this.id,
-    required this.name,
-    required this.maxHp,
-    this.attackThreshold = 6,
-    this.bonusDamage = 0,
-    this.armorPoints = 0,
-    this.playerCoatBypassed = false,
-    this.strikesFirst = false,
-    this.imageAsset,
-    this.specialNotes,
-  })  : currentHp = maxHp,
-        currentArmor = armorPoints;
-
-  factory Enemy.fromJson(Map<String, dynamic> json) {
-    return Enemy(
-      id: json['id'],
-      name: json['name'],
-      maxHp: json['max_hp'],
-      attackThreshold: json['attack_threshold'] ?? 6,
-      bonusDamage: json['bonus_damage'] ?? 0,
-      armorPoints: json['armor_points'] ?? 0,
-      playerCoatBypassed: json['dragon_coat_bypassed'] ?? false,
-      strikesFirst: json['strikes_first'] ?? false,
-      imageAsset: json['image'],
-    );
-  }
-
-  bool get isKnockedOut => currentHp <= 5;
-  bool get isDead => currentHp <= 0;
-
-  Enemy clone() => Enemy(
-    id: id, name: name, maxHp: maxHp, attackThreshold: attackThreshold,
-    bonusDamage: bonusDamage, armorPoints: armorPoints,
-    playerCoatBypassed: playerCoatBypassed, strikesFirst: strikesFirst,
-    imageAsset: imageAsset, specialNotes: specialNotes,
-  )..currentHp = currentHp..currentArmor = currentArmor;
-}
-
-// ─── Choix de navigation ────────────────────────────────────
-
-class ParagraphChoice {
-  final String text;
-  final String targetParagraph;
-  final String? requiresItem;   // ID d'objet requis (null = pas de prérequis)
-  final int? requiresGold;      // Or minimum requis
-  final bool hiddenIfMissing;   // true = bouton invisible si condition non remplie
-  final bool triggersCorruption;
-  final bool resetsGame;
-
-  const ParagraphChoice({
-    required this.text,
-    required this.targetParagraph,
-    this.requiresItem,
-    this.requiresGold,
-    this.hiddenIfMissing = false,
-    this.triggersCorruption = false,
-    this.resetsGame = false,
-  });
-
-  factory ParagraphChoice.fromJson(Map<String, dynamic> json) {
-    return ParagraphChoice(
-      text: json['text'],
-      targetParagraph: json['target_paragraph'],
-      requiresItem: json['requires_item'],
-      requiresGold: json['requires_gold'],
-      hiddenIfMissing: json['hidden_if_missing'] ?? false,
-      triggersCorruption: json['triggers_corruption'] ?? false,
-      resetsGame: json['resets_game'] ?? false,
-    );
-  }
-}
-
-// ─── Données de combat intégrées au paragraphe ─────────────
-
-class CombatData {
-  final String enemyId;
-  final bool? playerStrikesFirst;   // null = tirage au sort (§8 du Rêve)
-  final String onWinParagraph;
-  final String onDeathParagraph;
-  final int multiCount;             // 1 = normal, 2+ = multi-combat
-  final String? special;            // "zombie_kill_only_on_9_12", etc.
-
-  const CombatData({
-    required this.enemyId,
-    this.playerStrikesFirst,
-    required this.onWinParagraph,
-    required this.onDeathParagraph,
-    this.multiCount = 1,
-    this.special,
-  });
-
-  factory CombatData.fromJson(Map<String, dynamic> json) {
-    return CombatData(
-      enemyId: json['enemy_id'] as String,
-      playerStrikesFirst: json['player_strikes_first'] as bool?,
-      onWinParagraph: json['on_win_paragraph'] as String,
-      onDeathParagraph: json['on_death_paragraph'] as String,
-      multiCount: json['multi_count'] as int? ?? 1,
-      special: json['special'] as String?,
-    );
-  }
-}
-
-// ─── Paragraphe ────────────────────────────────────────────
-
-class Paragraph {
-  final String id;
-  final String title;
-  final String text; // Markdown
-  final String? imageAsset;
-  final CombatData? combat;
-  final List<ParagraphChoice> choices;
-  final List<Map<String, dynamic>> loot;  // [{type:"gold", amount:100}, {type:"item", item_id:"ej"}]
-  final int? corruptionTier;   // null, 1, 2, 3 ou 4
-  final bool isDeathParagraph;
-  final int grantsXp;
-
-  const Paragraph({
-    required this.id,
-    required this.title,
-    required this.text,
-    this.imageAsset,
-    this.combat,
-    this.choices = const [],
-    this.loot = const [],
-    this.corruptionTier,
-    this.isDeathParagraph = false,
-    this.grantsXp = 0,
-  });
-
-  factory Paragraph.fromJson(Map<String, dynamic> json) {
-    return Paragraph(
-      id: json['id'],
-      title: json['title'] ?? '',
-      text: json['text'] ?? '',
-      imageAsset: json['image'],
-      combat: json['combat'] != null
-          ? CombatData.fromJson(json['combat'])
-          : null,
-      choices: (json['choices'] as List<dynamic>? ?? [])
-          .map((c) => ParagraphChoice.fromJson(c))
-          .toList(),
-      loot: List<Map<String, dynamic>>.from(json['loot'] ?? []),
-      corruptionTier: json['corruption_tier'],
-      isDeathParagraph: json['is_death_paragraph'] ?? false,
-      grantsXp: json['grants_xp'] ?? 0,
-    );
-  }
-}
-
-// ─── Bourse ────────────────────────────────────────────────
+// ── Bourse ────────────────────────────────────────────────
 
 class Purse {
   final int goldPieces;
@@ -256,36 +282,27 @@ class Purse {
     this.gems = 0,
   });
 
-  Purse copyWith({int? goldPieces, int? silverPieces, int? gems}) {
-    return Purse(
-      goldPieces: goldPieces ?? this.goldPieces,
-      silverPieces: silverPieces ?? this.silverPieces,
-      gems: gems ?? this.gems,
-    );
-  }
-
-  factory Purse.fromJson(Map<String, dynamic> json) {
-    return Purse(
-      goldPieces: json['gold_pieces'] ?? 0,
-      silverPieces: json['silver_pieces'] ?? 0,
-      gems: json['gems'] ?? 0,
-    );
-  }
+  Purse copyWith({int? goldPieces, int? silverPieces, int? gems}) => Purse(
+    goldPieces: goldPieces ?? this.goldPieces,
+    silverPieces: silverPieces ?? this.silverPieces,
+    gems: gems ?? this.gems,
+  );
 }
 
-// ─── État global du joueur ─────────────────────────────────
+// ── État du joueur ────────────────────────────────────────
 
 class PlayerState {
   final int maxHp;
   final int currentHp;
-  final int permanentHp;         // Points permanents cumulés
+  final int permanentHp;
   final int experiencePoints;
   final List<InventoryItem> inventory;
   final Purse purse;
-  final String currentParagraphId;
-  final Set<String> defeatedEnemies;  // IDs des ennemis tués (persistent)
-  final Set<String> collectedLoot;    // IDs de loot déjà ramassé
-  final List<String> history;         // Historique des IDs parcourus
+  // Navigation
+  final String currentChapterId;    // ex: "ch_mission"
+  final String? currentParagraphId; // ex: "3" (null si narration)
+  final Set<String> defeatedEnemies;
+  final Set<String> collectedLoot;
 
   const PlayerState({
     required this.maxHp,
@@ -294,68 +311,46 @@ class PlayerState {
     this.experiencePoints = 0,
     this.inventory = const [],
     this.purse = const Purse(),
-    this.currentParagraphId = 'intro',
+    this.currentChapterId = 'ch_merlin',
+    this.currentParagraphId,
     this.defeatedEnemies = const {},
     this.collectedLoot = const {},
-    this.history = const [],
   });
 
-  // ── Getters utiles ─────────────────────────────────────────
-
   bool get isDead => currentHp <= 0;
-  bool get isKnockedOut => currentHp <= 5 && currentHp > 0;
-
-  InventoryItem? get equippedWeapon => inventory.firstWhere(
-    (i) => i.type == ItemType.weapon && i.id == 'ej',
-    orElse: () => inventory.firstWhere(
-      (i) => i.type == ItemType.weapon,
-      orElse: () => InventoryItem(
-        id: 'fists', name: 'Poings', type: ItemType.weapon, description: '',
-      ),
-    ),
-  );
-
-  InventoryItem? get equippedArmor => inventory.firstWhere(
-    (i) => i.type == ItemType.armor,
-    orElse: () => InventoryItem(
-      id: 'none', name: 'Aucune armure', type: ItemType.armor, description: '',
-    ),
-  );
-
-  bool hasItem(String itemId) => inventory.any((i) => i.id == itemId);
+  bool hasItem(String id) => inventory.any((i) => i.id == id);
   bool hasGold(int amount) => purse.goldPieces >= amount;
 
   int get attackThreshold {
-    final weapon = equippedWeapon;
-    return weapon?.attackThresholdOverride ?? 6;
+    final w = inventory.firstWhere(
+      (i) => i.type == ItemType.weapon && i.attackThresholdOverride != null,
+      orElse: () => InventoryItem(id:'_', name:'', type:ItemType.weapon, description:''),
+    );
+    return w.attackThresholdOverride ?? 6;
   }
 
   int get weaponBonusDamage {
-    return equippedWeapon?.bonusDamage ?? 0;
+    int bonus = 0;
+    for (final i in inventory) {
+      if (i.type == ItemType.weapon) bonus += i.bonusDamage;
+    }
+    return bonus;
   }
 
   int get armorReduction {
-    return equippedArmor?.damageReduction ?? 0;
+    int r = 0;
+    for (final i in inventory) {
+      if (i.type == ItemType.armor) r += i.damageReduction;
+    }
+    return r;
   }
 
-  // ── Calculs XP ────────────────────────────────────────────
-
-  int get xpToNextPermanentHp => 20 - (experiencePoints % 20);
-  int get totalPermanentHpEarned => experiencePoints ~/ 20;
-
-  // ── copyWith ───────────────────────────────────────────────
-
   PlayerState copyWith({
-    int? maxHp,
-    int? currentHp,
-    int? permanentHp,
-    int? experiencePoints,
-    List<InventoryItem>? inventory,
-    Purse? purse,
-    String? currentParagraphId,
-    Set<String>? defeatedEnemies,
-    Set<String>? collectedLoot,
-    List<String>? history,
+    int? maxHp, int? currentHp, int? permanentHp, int? experiencePoints,
+    List<InventoryItem>? inventory, Purse? purse,
+    String? currentChapterId, String? currentParagraphId,
+    Set<String>? defeatedEnemies, Set<String>? collectedLoot,
+    bool clearParagraph = false,
   }) {
     return PlayerState(
       maxHp: maxHp ?? this.maxHp,
@@ -364,10 +359,10 @@ class PlayerState {
       experiencePoints: experiencePoints ?? this.experiencePoints,
       inventory: inventory ?? this.inventory,
       purse: purse ?? this.purse,
-      currentParagraphId: currentParagraphId ?? this.currentParagraphId,
+      currentChapterId: currentChapterId ?? this.currentChapterId,
+      currentParagraphId: clearParagraph ? null : (currentParagraphId ?? this.currentParagraphId),
       defeatedEnemies: defeatedEnemies ?? this.defeatedEnemies,
       collectedLoot: collectedLoot ?? this.collectedLoot,
-      history: history ?? this.history,
     );
   }
 }
